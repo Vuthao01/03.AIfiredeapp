@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIfirede - Hệ Thống Giám Sát & Phòng Cháy Chữa Cháy Thông Minh</title>
+  <meta name="description" content="Hệ thống giám sát và phòng cháy chữa cháy thông minh sử dụng AI phân tích camera thời gian thực.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">🔥</div>
+        <div class="sidebar-brand">
+          <h1>AIfirede</h1>
+          <span>Hệ thống PCCC thông minh</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Giám sát</div>
+          <a class="nav-item active" data-page="dashboard" href="#">
+            <i class="fas fa-chart-pie"></i>
+            <span>Tổng Quan</span>
+          </a>
+          <a class="nav-item" data-page="cameras" href="#">
+            <i class="fas fa-video"></i>
+            <span>Camera Trực Tiếp</span>
+          </a>
+          <a class="nav-item" data-page="map" href="#">
+            <i class="fas fa-map-marked-alt"></i>
+            <span>Bản Đồ Khu Vực</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Quản lý</div>
+          <a class="nav-item" data-page="alerts" href="#">
+            <i class="fas fa-bell"></i>
+            <span>Cảnh Báo</span>
+            <span class="nav-badge" id="alert-badge" style="display:none">0</span>
+          </a>
+          <a class="nav-item" data-page="reports" href="#">
+            <i class="fas fa-file-alt"></i>
+            <span>Báo Cáo</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Vận hành</div>
+          <a class="nav-item" data-page="controls" href="#">
+            <i class="fas fa-sliders-h"></i>
+            <span>Điều Khiển Thiết Bị</span>
+          </a>
+          <a class="nav-item" data-page="settings" href="#">
+            <i class="fas fa-cog"></i>
+            <span>Cài Đặt</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="user-avatar">NV</div>
+          <div class="user-info">
+            <div class="name">Nguyễn Văn A</div>
+            <div class="role">Trưởng ca trực</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="main-header">
+        <div class="header-left">
+          <h2 class="header-title" id="header-title">Tổng Quan</h2>
+          <div class="header-breadcrumb">
+            <span>AIfirede</span>
+            <span class="separator">/</span>
+            <span id="breadcrumb-page">Tổng Quan</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-clock" id="header-clock">--:--:--</div>
+          <div class="system-status online" id="system-status">
+            <span class="status-dot"></span>
+            Hoạt động
+          </div>
+          <button class="header-btn" title="Thông báo" onclick="app.navigateTo('alerts')">
+            <i class="fas fa-bell"></i>
+            <span class="notification-dot" id="notification-dot" style="display:none"></span>
+          </button>
+          <button class="header-btn" title="Toàn màn hình" onclick="document.documentElement.requestFullscreen?.()">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content-wrapper">
+        
+        <!-- ========== PAGE: DASHBOARD ========== -->
+        <div class="page active" id="page-dashboard">
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card info">
+              <div class="stat-card-header">
+                <div class="stat-card-icon"><i class="fas fa-video"></i></div>
+                <div class="stat-card-trend down"><i class="fas fa-arrow-down"></i> 0</div>
+              </div>
+              <div class="stat-card-value" id="stat-cameras">7/9</div>
+              <div class="stat-card-label">Camera hoạt động</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-card-header">
+                <div class="stat-card-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-card-trend up"><i class="fas fa-arrow-up"></i> +2</div>
+              </div>
+              <div class="stat-card-value" id="stat-alerts">3</div>
+              <div class="stat-card-label">Cảnh báo hôm nay</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-card-header">
+                <div class="stat-card-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="stat-card-trend down"><i class="fas fa-arrow-down"></i> -5%</div>
+              </div>
+              <div class="stat-card-value" id="stat-risk">12%</div>
+              <div class="stat-card-label">Mức độ rủi ro</div>
+            </div>
+            <div class="stat-card info" id="stat-card-temp">
+              <div class="stat-card-header">
+                <div class="stat-card-icon"><i class="fas fa-thermometer-half"></i></div>
+                <div class="stat-card-trend up"><i class="fas fa-fire"></i> Live</div>
+              </div>
+              <div class="stat-card-value" id="stat-max-temp">--°C</div>
+              <div class="stat-card-label">Nhiệt Độ (AI Sensor)</div>
+            </div>
+          </div>
+
+          <!-- Bento Grid -->
+          <div class="bento-grid">
+            <!-- Main Camera Feed -->
+            <div class="bento-card bento-main-camera">
+              <div class="bento-card-header">
+                <div class="bento-card-title">
+                  <i class="fas fa-video"></i> Camera Chính - AI Live
+                </div>
+                <div class="bento-card-actions">
+                  <button class="header-btn" title="Mở rộng" onclick="app.navigateTo('cameras')"><i class="fas fa-expand"></i></button>
+                </div>
+              </div>
+              <div class="bento-card-body no-pad" id="dashboard-camera-container">
+                <!-- Camera renders here -->
+              </div>
+            </div>
+
+            <!-- Alert Trend Chart -->
+            <div class="bento-card">
+              <div class="bento-card-header">
+                <div class="bento-card-title">
+                  <i class="fas fa-chart-line"></i> Xu Hướng Cảnh Báo (24h)
+                </div>
+              </div>
+              <div class="bento-card-body">
+                <div class="chart-container">
+                  <canvas id="chart-alert-trend"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="bento-card">
+              <div class="bento-card-header">
+                <div class="bento-card-title">
+                  <i class="fas fa-bell"></i> Cảnh Báo Gần Đây
+                </div>
+                <div class="bento-card-actions">
+                  <button class="header-btn" title="Xem tất cả" onclick="app.navigateTo('alerts')"><i class="fas fa-arrow-right"></i></button>
+                </div>
+              </div>
+              <div class="bento-card-body">
+                <div class="alert-list" id="dashboard-alerts">
+                  <!-- Alerts render here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Zone Status -->
+            <div class="bento-card">
+              <div class="bento-card-header">
+                <div class="bento-card-title">
+                  <i class="fas fa-th-large"></i> Trạng Thái Khu Vực
+                </div>
+                <div class="bento-card-actions">
+                  <button class="header-btn" title="Bản đồ" onclick="app.navigateTo('map')"><i class="fas fa-map"></i></button>
+                </div>
+              </div>
+              <div class="bento-card-body">
+                <div class="zone-grid" id="dashboard-zone-grid">
+                  <!-- Zones render here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Alert Distribution -->
+            <div class="bento-card">
+              <div class="bento-card-header">
+                <div class="bento-card-title">
+                  <i class="fas fa-chart-pie"></i> Phân Loại Cảnh Báo
+                </div>
+              </div>
+              <div class="bento-card-body">
+                <div class="chart-container">
+                  <canvas id="chart-alert-type"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="bento-card">
+              <div class="bento-card-header">
+                <div class="bento-card-title">
+                  <i class="fas fa-stream"></i> Hoạt Động Hệ Thống
+                </div>
+              </div>
+              <div class="bento-card-body">
+                <div class="activity-feed" id="dashboard-activity">
+                  <!-- Activity renders here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Zone Risk Chart -->
+          <div class="bento-card" style="margin-bottom: var(--space-xl)">
+            <div class="bento-card-header">
+              <div class="bento-card-title">
+                <i class="fas fa-chart-bar"></i> Mức Rủi Ro Theo Khu Vực
+              </div>
+            </div>
+            <div class="bento-card-body" style="min-height:220px">
+              <div class="chart-container">
+                <canvas id="chart-zone-risk"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== PAGE: CAMERAS ========== -->
+        <div class="page" id="page-cameras">
+          <div class="camera-page-toolbar">
+            <div class="toolbar-group">
+              <button class="toolbar-btn layout-btn active" data-layout="2x2">
+                <i class="fas fa-th-large"></i> 2×2
+              </button>
+              <button class="toolbar-btn layout-btn" data-layout="3x3">
+                <i class="fas fa-th"></i> 3×3
+              </button>
+              <button class="toolbar-btn layout-btn" data-layout="1x1">
+                <i class="fas fa-square"></i> 1×1
+              </button>
+            </div>
+            <div class="toolbar-group">
+              <button class="toolbar-btn" onclick="app._showToastMessage('Đã chụp ảnh màn hình', 'success')">
+                <i class="fas fa-camera"></i> Chụp ảnh
+              </button>
+              <button class="toolbar-btn" id="btn-record" onclick="this.classList.toggle('active'); app._showToastMessage(this.classList.contains('active') ? 'Đang ghi hình...' : 'Đã dừng ghi', this.classList.contains('active') ? 'danger' : 'info')">
+                <i class="fas fa-circle" style="color:var(--color-danger)"></i> Ghi hình
+              </button>
+            </div>
+          </div>
+          <div id="camera-grid-container" class="camera-page-grid layout-2x2">
+            <!-- Camera grid renders here -->
+          </div>
+        </div>
+
+        <!-- ========== PAGE: MAP ========== -->
+        <div class="page" id="page-map">
+          <div class="map-toolbar">
+            <div class="toolbar-group">
+              <button class="toolbar-btn active"><i class="fas fa-building"></i> Tầng 1</button>
+              <button class="toolbar-btn"><i class="fas fa-building"></i> Tầng 2</button>
+              <button class="toolbar-btn"><i class="fas fa-building"></i> Tầng 3</button>
+              <button class="toolbar-btn"><i class="fas fa-parking"></i> Tầng hầm</button>
+            </div>
+            <div class="toolbar-group">
+              <button class="toolbar-btn"><i class="fas fa-sync-alt"></i> Cập nhật</button>
+            </div>
+          </div>
+          <div class="map-container" id="building-map-container">
+            <!-- Building map renders here -->
+          </div>
+        </div>
+
+        <!-- ========== PAGE: ALERTS ========== -->
+        <div class="page" id="page-alerts">
+          <div class="reports-header">
+            <div>
+              <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:4px">Danh sách cảnh báo</h3>
+              <p style="font-size:0.82rem;color:var(--text-muted)">Tất cả cảnh báo từ hệ thống AI và cảm biến</p>
+            </div>
+          </div>
+          <div class="alert-list" id="alerts-full-list">
+            <!-- Full alerts list renders here -->
+          </div>
+        </div>
+
+        <!-- ========== PAGE: REPORTS ========== -->
+        <div class="page" id="page-reports">
+          <div class="reports-header">
+            <div>
+              <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:4px">Báo cáo sự cố</h3>
+              <p style="font-size:0.82rem;color:var(--text-muted)">Lịch sử sự cố và kết quả xử lý</p>
+            </div>
+            <div class="reports-filters">
+              <button class="filter-btn report-filter-btn active" data-filter="all">Tất cả</button>
+              <button class="filter-btn report-filter-btn" data-filter="active">Đang xử lý</button>
+              <button class="filter-btn report-filter-btn" data-filter="investigating">Đang điều tra</button>
+              <button class="filter-btn report-filter-btn" data-filter="resolved">Đã giải quyết</button>
+            </div>
+          </div>
+          <div class="bento-card">
+            <div class="bento-card-body no-pad" style="overflow-x:auto">
+              <div id="reports-table-container">
+                <!-- Reports table renders here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== PAGE: CONTROLS ========== -->
+        <div class="page" id="page-controls">
+          <div style="margin-bottom:var(--space-xl)">
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:4px">Bảng điều khiển thiết bị PCCC</h3>
+            <p style="font-size:0.82rem;color:var(--text-muted)">Điều khiển các thiết bị phòng cháy chữa cháy trong tòa nhà</p>
+          </div>
+
+          <!-- Sensitivity Control -->
+          <div class="bento-card" style="margin-bottom: var(--space-xl)">
+            <div class="bento-card-header">
+              <div class="bento-card-title"><i class="fas fa-brain"></i> Độ Nhạy AI Detection</div>
+            </div>
+            <div class="bento-card-body">
+              <div style="display:flex;align-items:center;gap:var(--space-lg)">
+                <span style="font-size:0.85rem;color:var(--text-muted);min-width:60px">Thấp</span>
+                <input type="range" class="control-slider" id="sensitivity-slider" min="10" max="100" value="65" style="flex:1">
+                <span style="font-size:0.85rem;color:var(--text-muted);min-width:60px">Cao</span>
+                <span style="font-size:1.2rem;font-weight:700;color:var(--color-info);min-width:50px;text-align:center" id="sensitivity-value">65%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls-grid">
+            <!-- Sprinkler A -->
+            <div class="control-card">
+              <div class="control-header">
+                <div class="control-title">
+                  <i class="fas fa-shower"></i>
+                  <div>
+                    <div>Sprinkler Khu A</div>
+                    <div class="device-status" style="font-size:0.75rem;font-weight:400;color:var(--text-dim)">Tắt</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" class="device-toggle" data-control="sprinklerA">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="control-details">
+                <div class="control-detail-row"><span class="label">Vị trí</span><span class="value">Tầng 1 - Sảnh chính</span></div>
+                <div class="control-detail-row"><span class="label">Đầu phun</span><span class="value">8 đầu</span></div>
+                <div class="control-detail-row"><span class="label">Áp lực</span><span class="value">2.5 bar</span></div>
+              </div>
+              <div class="control-actions">
+                <button class="ctrl-btn primary" onclick="app._showToastMessage('Đang kiểm tra sprinkler Khu A...', 'info')"><i class="fas fa-vial"></i> Test</button>
+                <button class="ctrl-btn danger" onclick="app._showToastMessage('Sprinkler Khu A - BẬT KHẨN CẤP!', 'danger')"><i class="fas fa-exclamation-triangle"></i> Kích hoạt</button>
+              </div>
+            </div>
+
+            <!-- Sprinkler B -->
+            <div class="control-card">
+              <div class="control-header">
+                <div class="control-title">
+                  <i class="fas fa-shower"></i>
+                  <div>
+                    <div>Sprinkler Khu B</div>
+                    <div class="device-status" style="font-size:0.75rem;font-weight:400;color:var(--text-dim)">Tắt</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" class="device-toggle" data-control="sprinklerB">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="control-details">
+                <div class="control-detail-row"><span class="label">Vị trí</span><span class="value">Tầng hầm - Kho hàng</span></div>
+                <div class="control-detail-row"><span class="label">Đầu phun</span><span class="value">12 đầu</span></div>
+                <div class="control-detail-row"><span class="label">Áp lực</span><span class="value">3.0 bar</span></div>
+              </div>
+              <div class="control-actions">
+                <button class="ctrl-btn primary" onclick="app._showToastMessage('Đang kiểm tra sprinkler Khu B...', 'info')"><i class="fas fa-vial"></i> Test</button>
+                <button class="ctrl-btn danger" onclick="app._showToastMessage('Sprinkler Khu B - BẬT KHẨN CẤP!', 'danger')"><i class="fas fa-exclamation-triangle"></i> Kích hoạt</button>
+              </div>
+            </div>
+
+            <!-- Emergency Exit -->
+            <div class="control-card">
+              <div class="control-header">
+                <div class="control-title">
+                  <i class="fas fa-door-open"></i>
+                  <div>
+                    <div>Cửa Thoát Hiểm</div>
+                    <div class="device-status" style="font-size:0.75rem;font-weight:400;color:var(--text-dim)">Khóa</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" class="device-toggle" data-control="exitDoors">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="control-details">
+                <div class="control-detail-row"><span class="label">Số cửa</span><span class="value">6 cửa</span></div>
+                <div class="control-detail-row"><span class="label">Trạng thái khóa</span><span class="value">Khóa điện tử</span></div>
+                <div class="control-detail-row"><span class="label">Pin dự phòng</span><span class="value">98%</span></div>
+              </div>
+              <div class="control-actions">
+                <button class="ctrl-btn success" onclick="app._showToastMessage('Mở tất cả cửa thoát hiểm!', 'success')"><i class="fas fa-lock-open"></i> Mở tất cả</button>
+                <button class="ctrl-btn danger" onclick="app._showToastMessage('Đã khóa tất cả cửa!', 'warning')"><i class="fas fa-lock"></i> Khóa</button>
+              </div>
+            </div>
+
+            <!-- Alarm Siren -->
+            <div class="control-card">
+              <div class="control-header">
+                <div class="control-title">
+                  <i class="fas fa-bullhorn"></i>
+                  <div>
+                    <div>Còi Báo Động</div>
+                    <div class="device-status" style="font-size:0.75rem;font-weight:400;color:var(--text-dim)">Tắt</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" class="device-toggle" data-control="alarmSiren">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="control-details">
+                <div class="control-detail-row"><span class="label">Loại</span><span class="value">Còi + Loa</span></div>
+                <div class="control-detail-row"><span class="label">Công suất</span><span class="value">120 dB</span></div>
+                <div class="control-detail-row"><span class="label">Khu vực</span><span class="value">Toàn tòa nhà</span></div>
+              </div>
+              <div class="control-actions">
+                <button class="ctrl-btn primary" onclick="app._showToastMessage('Test còi 3 giây...', 'info')"><i class="fas fa-vial"></i> Test 3s</button>
+                <button class="ctrl-btn danger" onclick="app._showToastMessage('🚨 CÒI BÁO ĐỘNG ĐÃ BẬT!', 'danger')"><i class="fas fa-exclamation-triangle"></i> Kích hoạt</button>
+              </div>
+            </div>
+
+            <!-- Emergency Lights -->
+            <div class="control-card">
+              <div class="control-header">
+                <div class="control-title">
+                  <i class="fas fa-lightbulb"></i>
+                  <div>
+                    <div>Đèn Khẩn Cấp</div>
+                    <div class="device-status" style="font-size:0.75rem;font-weight:400;color:var(--text-dim)">Tắt</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" class="device-toggle" data-control="emergencyLights">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="control-details">
+                <div class="control-detail-row"><span class="label">Số đèn</span><span class="value">24 bộ</span></div>
+                <div class="control-detail-row"><span class="label">Pin</span><span class="value">100% (sạc đầy)</span></div>
+                <div class="control-detail-row"><span class="label">Thời lượng</span><span class="value">~3 giờ</span></div>
+              </div>
+              <div class="control-actions">
+                <button class="ctrl-btn success" onclick="app._showToastMessage('Đèn khẩn cấp đã bật!', 'success')"><i class="fas fa-power-off"></i> Bật</button>
+              </div>
+            </div>
+
+            <!-- Ventilation -->
+            <div class="control-card">
+              <div class="control-header">
+                <div class="control-title">
+                  <i class="fas fa-fan"></i>
+                  <div>
+                    <div>Hệ Thống Thông Gió</div>
+                    <div class="device-status" style="font-size:0.75rem;font-weight:400;color:var(--color-success)">Đang hoạt động</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" class="device-toggle" data-control="ventilation" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="control-details">
+                <div class="control-detail-row"><span class="label">Chế độ</span><span class="value">Tự động</span></div>
+                <div class="control-detail-row"><span class="label">Tốc độ</span><span class="value">Trung bình</span></div>
+                <div class="control-detail-row"><span class="label">Lọc không khí</span><span class="value">HEPA (còn 85%)</span></div>
+              </div>
+              <div class="control-actions">
+                <button class="ctrl-btn primary"><i class="fas fa-tachometer-alt"></i> Thấp</button>
+                <button class="ctrl-btn primary"><i class="fas fa-tachometer-alt"></i> TB</button>
+                <button class="ctrl-btn danger"><i class="fas fa-tachometer-alt"></i> Cao</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emergency All Button -->
+          <div style="margin-top:var(--space-xl);text-align:center">
+            <button class="emergency-btn confirm" style="padding:16px 48px;font-size:1.1rem;border-radius:var(--border-radius-lg);background:linear-gradient(135deg, #ef4444, #dc2626);box-shadow:var(--shadow-glow-danger)" onclick="if(confirm('Bạn có chắc muốn kích hoạt TẤT CẢ hệ thống PCCC?')){app.controls.sprinklerA=true;app.controls.sprinklerB=true;app.controls.exitDoors=true;app.controls.alarmSiren=true;app.controls.emergencyLights=true;app._showToastMessage('🚨 ĐÃ KÍCH HOẠT TẤT CẢ HỆ THỐNG PCCC!','danger');document.querySelectorAll('.device-toggle').forEach(t=>t.checked=true)}">
+              <i class="fas fa-exclamation-triangle"></i> KÍCH HOẠT TOÀN BỘ HỆ THỐNG PCCC
+            </button>
+          </div>
+        </div>
+
+        <!-- ========== PAGE: SETTINGS ========== -->
+        <div class="page" id="page-settings">
+          <div style="margin-bottom:var(--space-xl)">
+            <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:4px">Cài đặt hệ thống</h3>
+            <p style="font-size:0.82rem;color:var(--text-muted)">Tùy chỉnh các thông số hoạt động của AIfirede</p>
+          </div>
+
+          <div class="settings-grid">
+            <!-- Notification Settings -->
+            <div class="settings-section">
+              <div class="settings-section-title"><i class="fas fa-bell"></i> Thông Báo & Cảnh Báo</div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Âm thanh cảnh báo</div>
+                  <div class="setting-desc">Phát âm thanh khi phát hiện nguy hiểm</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setting-sound" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Thông báo trình duyệt</div>
+                  <div class="setting-desc">Hiển thị thông báo push từ browser</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setting-notifications" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Phản hồi tự động</div>
+                  <div class="setting-desc">Tự động kích hoạt PCCC khi phát hiện cháy mức Critical</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setting-auto-response" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- AI Settings -->
+            <div class="settings-section">
+              <div class="settings-section-title"><i class="fas fa-brain"></i> AI Detection</div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Ngưỡng phát hiện lửa</div>
+                  <div class="setting-desc">Confidence tối thiểu để kích hoạt cảnh báo lửa</div>
+                </div>
+                <input type="number" class="setting-input" value="40" min="10" max="90" step="5"> <span style="color:var(--text-dim);margin-left:4px">%</span>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Ngưỡng phát hiện khói</div>
+                  <div class="setting-desc">Confidence tối thiểu để kích hoạt cảnh báo khói</div>
+                </div>
+                <input type="number" class="setting-input" value="35" min="10" max="90" step="5"> <span style="color:var(--text-dim);margin-left:4px">%</span>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Tần suất phân tích</div>
+                  <div class="setting-desc">Số frame phân tích mỗi giây</div>
+                </div>
+                <input type="number" class="setting-input" value="10" min="1" max="30"> <span style="color:var(--text-dim);margin-left:4px">fps</span>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div class="setting-label">Cooldown cảnh báo</div>
+                  <div class="setting-desc">Thời gian tối thiểu giữa các cảnh báo cùng loại</div>
+                </div>
+                <input type="number" class="setting-input" value="5" min="1" max="60"> <span style="color:var(--text-dim);margin-left:4px">giây</span>
+              </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="settings-section">
+              <div class="settings-section-title"><i class="fas fa-info-circle"></i> Thông Tin Hệ Thống</div>
+              <div class="setting-row">
+                <div class="setting-label">Phiên bản</div>
+                <span style="color:var(--color-info);font-weight:500">AIfirede v1.0.0</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Engine</div>
+                <span style="color:var(--text-secondary);font-weight:500">Computer Vision (HSV + Motion)</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Camera kết nối</div>
+                <span style="color:var(--text-secondary);font-weight:500">7/9 online</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Cảm biến</div>
+                <span style="color:var(--text-secondary);font-weight:500">23 thiết bị</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Uptime</div>
+                <span style="color:var(--color-success);font-weight:500">99.7% (30 ngày)</span>
+              </div>
+            </div>
+
+            <!-- Contact -->
+            <div class="settings-section">
+              <div class="settings-section-title"><i class="fas fa-phone-alt"></i> Liên Hệ Khẩn Cấp</div>
+              <div class="setting-row">
+                <div class="setting-label">Cứu hỏa</div>
+                <span style="color:var(--color-danger);font-weight:700;font-size:1.1rem">114</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Cứu thương</div>
+                <span style="color:var(--color-danger);font-weight:700;font-size:1.1rem">115</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Đội PCCC nội bộ</div>
+                <span style="color:var(--color-info);font-weight:600">0901-234-567</span>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label">Quản lý tòa nhà</div>
+                <span style="color:var(--color-info);font-weight:600">0912-345-678</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== EMERGENCY MODAL ==================== -->
+  <div class="emergency-overlay" id="emergency-overlay">
+    <div class="emergency-modal">
+      <div class="emergency-icon">
+        <i class="fas fa-fire"></i>
+      </div>
+      <h2 class="emergency-title">🚨 PHÁT HIỆN CHÁY!</h2>
+      <p class="emergency-desc">Hệ thống AI đã phát hiện dấu hiệu cháy. Vui lòng xác nhận để kích hoạt hệ thống PCCC tự động.</p>
+      <div class="emergency-details">
+        <!-- Details injected by JS -->
+      </div>
+      <div class="emergency-actions">
+        <button class="emergency-btn confirm" id="emergency-confirm">
+          <i class="fas fa-check"></i> Kích hoạt PCCC
+        </button>
+        <button class="emergency-btn dismiss" id="emergency-dismiss">
+          <i class="fas fa-times"></i> Bỏ qua
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- JS Modules -->
+  <script src="js/ai-detector.js"></script>
+  <script src="js/camera-manager.js"></script>
+  <script src="js/alert-system.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/report-manager.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
